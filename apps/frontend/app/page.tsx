@@ -4,6 +4,7 @@
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Arrow7 from "@/components/svg";
 
 export default function Index() {
   const [text, setText] = useState("");
@@ -46,7 +47,7 @@ export default function Index() {
   return (
     <main className="flex min-h-screen flex-col items-center">
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center min-h-screen w-full text-center px-4">
+      <section className="relative flex flex-col items-center justify-center pt-[30vh] min-h-scxreen w-full text-center px-4">
         <div className="absolute top-4 right-4 z-10"></div>
 
         <div className="relative z-10">
@@ -77,24 +78,17 @@ export default function Index() {
                 Join The Waitlist
               </Button>
             </Link>
-
-            {/* Arrow positioning restored to original but with increased size */}
-            <div className="relative -left-10 bottom-[-280px] sm:-left-8 sm:bottom-[-320px] flex items-start">
-              <img
-                src="/arrow2.jpg"
-                alt="Arrow pointing to text"
-                width={350}
-                height={500}
-                className="transform rotate-0"
-                onClick={scrollToSection}
-              />
+            <div className="absolute left-2/4  top-[200%] w-2/4">(you can also scroll for more info)</div>
+            <div className="absolute   top-full  left-1/3  ">  <Arrow7 className="rotate-stroke-fuchsia-500 fill-fuchsia-500" style={{transform:'rotateY(45deg)'}}/>
             </div>
+            {/* Arrow positioning restored to original but with increased size */}
+          
           </div>
         </div>
       </section>
       <section
         ref={scrollSectionRef}
-        className="min-h-screen w-full max-w-3xl mx-auto px-6 py-16 flex flex-col justify-center relative"
+        className="mt-80 w-full max-w-3xl mx-auto px-6 py-16 pt-0 flex flex-col justify-center relative"
       >
         <div className="space-y-8 text-left max-w-2xl mx-auto">
           {/* Text content */}
