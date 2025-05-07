@@ -49,7 +49,7 @@ export default function SignupPage() {
    
 
     try {
-      const response = await fetch('http://localhost:5000/api/follow', {
+      const response = await fetch('https://profound-strength-production-8e34.up.railway.app/api/follow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

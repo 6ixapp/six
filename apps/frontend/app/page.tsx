@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState, useRef } from "react";
@@ -21,8 +20,8 @@ export default function Index() {
       const currentIndex = loopNum % phrases.length;
       const fullText = phrases[currentIndex];
 
-      const updatedText = isDeleting 
-        ? fullText.substring(0, text.length - 1) 
+      const updatedText = isDeleting
+        ? fullText.substring(0, text.length - 1)
         : fullText.substring(0, text.length + 1);
 
       setText(updatedText);
@@ -80,33 +79,44 @@ export default function Index() {
               </Button>
             </Link>
             <div className="absolute left-[32%] top-[200%] w-2/4 text-sm">
-  (you can also scroll for more info)
-</div>
+              (you can also scroll for more info)
+            </div>
 
             <div className="absolute top-[20%] left-[10%] text-purple-600">
-  <Arrow31 className="rotate-stroke-purple-500" style={{ transform: 'rotateY(45deg)' }} />
-</div>
-
-            {/* Arrow positioning restored to original but with increased size */}
-          
+              <Arrow31 className="rotate-stroke-purple-500" style={{ transform: "rotateY(45deg)" }} />
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Info Section */}
       <section
         ref={scrollSectionRef}
         className="mt-80 w-full max-w-3xl mx-auto px-6 py-16 pt-0 flex flex-col justify-center relative"
       >
         <div className="space-y-8 text-left max-w-2xl mx-auto">
-          {/* Text content */}
           <div className="w-full">
             <div className="relative w-full">
               <img
-                src="/text.jpg" 
+                src="/text.jpg"
                 alt="Six AI matchmaker description"
                 className="w-full h-auto object-contain"
               />
             </div>
           </div>
+
+          {/* Terms and Conditions & Email */}
+          {/* Terms and Conditions & Email */}
+<div className="mt-20 text-center">
+  <Link
+    href="/about"
+    className="text-[10px] text-gray-600 hover:text-blue-500 transition-colors duration-200"
+  >
+    Terms and Conditions
+  </Link>
+  <p className="text-[10px] text-gray-400 mt-1">Email: contact@hsks.com</p>
+</div>
+
         </div>
       </section>
 
