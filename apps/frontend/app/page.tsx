@@ -74,7 +74,7 @@ export default function Index() {
           </div>
 
           <div className="relative mt-4">
-            <Link href="/prefrence">
+            <Link href="/prfrence">
               <Button className="rounded-full bg-gradient-to-r from-blue-500 to-pink-500 hover:from-blue-600 hover:to-pink-600 text-white px-8 py-6 text-lg h-auto">
                 Join The Waitlist
               </Button>
