@@ -17,12 +17,9 @@ export default function SignupPage() {
     agreeToTerms: false,
   });
 
-  // State to store the preference from localStorage
   const [userPreference, setUserPreference] = useState("");
 
-  // Get preference from localStorage on component mount
   useEffect(() => {
-    // Need to use this pattern because localStorage is not available during SSR
     const storedPreference = typeof window !== 'undefined' ? localStorage.getItem('userPreference') : null;
     if (storedPreference) {
       setUserPreference(storedPreference);
@@ -34,7 +31,7 @@ export default function SignupPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const isPhoneNumberValid = /^[0-9]{10}$/.test(formData.phoneNumber); // Validate 10-digit number
+  const isPhoneNumberValid = /^[0-9]{10}$/.test(formData.phoneNumber);
 
   const isFormValid =
     formData.firstName.trim() &&
@@ -42,11 +39,14 @@ export default function SignupPage() {
     formData.gender &&
     formData.phoneNumber.trim() &&
     isPhoneNumberValid &&
-    formData.instagram.trim();
+    formData.instagram.trim() 
+    
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('handleSubmit triggered with:', formData);
+
+   
 
     try {
       const response = await fetch('http://localhost:5000/api/follow', {
@@ -75,7 +75,7 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white dark:bg-black text-black dark:text-white flex flex-col items-center px-4 py-4">
+    <main className="min-h-screen bg-white text-black flex flex-col items-center px-4 py-4">
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
@@ -103,7 +103,7 @@ export default function SignupPage() {
             name="firstName"
             value={formData.firstName}
             onChange={handleChange}
-            className="w-full bg-zinc-100 dark:bg-zinc-800/80 text-black dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 rounded-md px-4 py-2 focus:outline-none"
+            className="w-full bg-zinc-100 text-black placeholder:text-zinc-500 rounded-md px-4 py-2 focus:outline-none"
             placeholder=""
           />
         </div>
@@ -117,7 +117,7 @@ export default function SignupPage() {
               name="age"
               value={formData.age}
               onChange={handleChange}
-              className="w-full bg-zinc-100 dark:bg-zinc-800/80 text-black dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 rounded-md px-4 py-2 focus:outline-none"
+              className="w-full bg-zinc-100 text-black placeholder:text-zinc-500 rounded-md px-4 py-2 focus:outline-none"
               placeholder=""
             />
           </div>
@@ -130,14 +130,14 @@ export default function SignupPage() {
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                className="w-full bg-zinc-100 dark:bg-zinc-800/80 text-black dark:text-white px-4 pr-10 py-2 rounded-md appearance-none focus:outline-none"
+                className="w-full bg-zinc-100 text-black px-4 pr-10 py-2 rounded-md appearance-none focus:outline-none"
               >
                 <option value="" disabled>Select...</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
                 <option value="other">Other</option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-black dark:text-white">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-black">
                 <ChevronDown className="w-4 h-4" />
               </div>
             </div>
@@ -152,7 +152,7 @@ export default function SignupPage() {
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={handleChange}
-            className="w-full bg-zinc-100 dark:bg-zinc-800/80 text-black dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 rounded-md px-4 py-2 focus:outline-none"
+            className="w-full bg-zinc-100 text-black placeholder:text-zinc-500 rounded-md px-4 py-2 focus:outline-none"
             placeholder=""
           />
         </div>
@@ -165,12 +165,12 @@ export default function SignupPage() {
             name="instagram"
             value={formData.instagram}
             onChange={handleChange}
-            className="w-full bg-zinc-100 dark:bg-zinc-800/80 text-black dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 rounded-md px-4 py-2 focus:outline-none"
+            className="w-full bg-zinc-100 text-black placeholder:text-zinc-500 rounded-md px-4 py-2 focus:outline-none"
             placeholder="Accept our request for verification"
           />
         </div>
 
-        <p className="pt-1 text-xs text-zinc-600 dark:text-zinc-400 text-center leading-relaxed px-4">
+        <p className="pt-1 text-xs text-zinc-600 text-center leading-relaxed px-4">
           *Disclaimer: our matching algorithm reads between the lines and decodes your voice, tone, energy – the little
           things even your therapist wouldn't get
         </p>

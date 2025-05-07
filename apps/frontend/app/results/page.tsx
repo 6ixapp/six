@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Confetti } from "@/components/ui/confetti"
 
 export default function Results() {
-  const changingWords = [" forms", " quizzes","swiping"]
+  const changingWords = [" forms", " quizzes", "swiping"]
   const fixedWord = "No "
   const [wordIndex, setWordIndex] = useState(0)
   const [fade, setFade] = useState(true)
@@ -23,7 +23,7 @@ export default function Results() {
   }, [])
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen px-4 text-center bg-white dark:bg-black relative">
+    <main className="flex flex-col items-center justify-center min-h-screen px-4 text-center bg-white relative">
       {/* Confetti effect */}
       <Confetti />
 
@@ -44,7 +44,7 @@ export default function Results() {
 
       {/* Main Headings */}
       <div className="flex flex-col justify-center items-center mb-4 space-y-3">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 whitespace-nowrap">
           Welcome to{" "}
           <span className="bg-gradient-to-r from-blue-500 to-pink-500 bg-clip-text text-transparent">
             Six
@@ -52,12 +52,12 @@ export default function Results() {
         </h1>
 
         {/* Extra Subheading */}
-        <p className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-400">
+        <p className="text-lg sm:text-xl md:text-2xl text-gray-600">
           We’ll talk soon...
         </p>
 
         {/* Changing subheading */}
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-medium text-gray-800 dark:text-gray-300">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-medium text-gray-800">
           {fixedWord}{" "}
           <span
             className={`inline-block transition-opacity duration-500 ${

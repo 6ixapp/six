@@ -15,20 +15,20 @@ export default function SelectionPage() {
   ]
 
   const handleOptionSelect = (optionId: string) => {
-    setSelectedOption(optionId);
+    setSelectedOption(optionId)
     // Save to localStorage
-    localStorage.setItem('userPreference', optionId);
+    localStorage.setItem("userPreference", optionId)
   }
 
   useEffect(() => {
-    const storedPreference = localStorage.getItem('userPreference');
+    const storedPreference = localStorage.getItem("userPreference")
     if (storedPreference) {
-      setSelectedOption(storedPreference);
+      setSelectedOption(storedPreference)
     }
-  }, []);
+  }, [])
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center bg-white dark:bg-black transition-colors duration-300">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center bg-white text-black transition-colors duration-300">
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
@@ -44,10 +44,7 @@ export default function SelectionPage() {
       </motion.div>
 
       <div className="max-w-xl mx-auto">
-        <p className="text-xl mb-1 text-gray-700 dark:text-gray-200">I&apos;m looking for...</p>
-        
-
-       
+        <p className="text-xl mb-1 text-gray-700">I&apos;m looking for...</p>
       </div>
 
       <div className="mb-8 flex flex-col gap-4 w-full max-w-xs">
@@ -58,7 +55,7 @@ export default function SelectionPage() {
             className={`w-full px-6 py-4 rounded-full border-2 text-xl mb-1 transition-all duration-300 ${
               selectedOption === option.id
                 ? "border-4 border-pink-500"
-                : "border-2 border-gray-300 dark:border-gray-600 hover:border-pink-400 dark:hover:border-pink-500"
+                : "border-2 border-gray-300 hover:border-pink-400"
             }`}
           >
             {option.label}

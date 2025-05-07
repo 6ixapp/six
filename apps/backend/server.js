@@ -3,7 +3,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
-const twilio = require('twilio');
+
 const fs = require('fs');
 
 // Get the absolute path to the .env file
@@ -36,18 +36,6 @@ app.use(express.static('public')); // Serve static files from 'public' directory
 const INSTAGRAM_USERNAME = process.env.IG_USERNAME;
 const INSTAGRAM_PASSWORD = process.env.IG_PASSWORD;
 const COOKIES_PATH = path.join(__dirname, 'cookies.json');
-
-// Twilio configuration
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER;
-const twilioClient = twilio(accountSid, authToken);
-
-// Debug Twilio configuration
-console.log('Twilio configuration:');
-console.log('TWILIO_ACCOUNT_SID exists:', !!process.env.TWILIO_ACCOUNT_SID);
-console.log('TWILIO_AUTH_TOKEN exists:', !!process.env.TWILIO_AUTH_TOKEN);
-console.log('TWILIO_PHONE_NUMBER exists:', !!process.env.TWILIO_PHONE_NUMBER);
 
 // Import PostgreSQL models
 const { User, syncDatabase } = require('./models/sequelize');
@@ -187,7 +175,7 @@ async function initializeBrowser() {
     if (!browser) {
       console.log('Initializing new browser...');
       browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         defaultViewport: null,
         args: [
           '--no-sandbox',
@@ -407,26 +395,6 @@ async function checkFollowRequestAccepted(username) {
   }
 }
 
-async function sendSMS(phoneNumber, username) {
-  // Ensure phone number is in E.164 format
-  const formattedPhone = formatPhoneNumber(phoneNumber);
-  console.log(`Attempting to send SMS to ${formattedPhone}`);
-
-  try {
-    const message = await twilioClient.messages.create({
-      body: `Hey ${username}, I’m Six, your AI matchmaker!! Save my number — you’ll be hearing from me soon 🎉`,
-      from: TWILIO_PHONE_NUMBER,
-      to: formattedPhone
-    });
-
-    console.log(`SMS sent to ${formattedPhone}, SID: ${message.sid}`);
-    return true;
-  } catch (error) {
-    console.error('Error sending SMS:', error);
-    return false;
-  }
-}
-
 function formatPhoneNumber(phoneNumber) {
   let cleaned = phoneNumber.replace(/\D/g, '');
   // If it's a local 10-digit number, add default country code
@@ -446,8 +414,7 @@ async function pollFollowRequests() {
       const pendingUsers = await User.findAll({ 
         where: { 
           followRequestSent: true, 
-          followRequestAccepted: false,
-          smsSent: false
+          followRequestAccepted: false
         }
       });
       
@@ -464,20 +431,11 @@ async function pollFollowRequests() {
             if (accepted) {
               console.log(`Follow request accepted by ${username}!`);
               
-              // Send SMS notification
-              try {
-                console.log(`Sending SMS to ${user.phoneNumber}...`);
-                await sendSMS(user.phoneNumber, user.firstName || username);
-                console.log(`SMS successfully sent to ${user.phoneNumber}`);
-                
-                // Update user in PostgreSQL
-                await User.update(
-                  { followRequestAccepted: true, smsSent: true },
-                  { where: { instagram: username } }
-                );
-              } catch (error) {
-                console.error('SMS failed:', error.message);
-              }
+              // Update user in PostgreSQL
+              await User.update(
+                { followRequestAccepted: true },
+                { where: { instagram: username } }
+              );
             }
           } catch (error) {
             console.error(`Error checking follow status for ${username}:`, error.message);
@@ -549,9 +507,6 @@ app.post('/api/follow', async (req, res) => {
     }
 
     if (success) {
-      // Send SMS via Twilio
-      await sendSMS(phoneNumber, name || cleanUsername);
-      
       res.json({ 
         success: true, 
         message: `Successfully sent follow request to ${cleanUsername}. We'll notify you when they accept.` 
