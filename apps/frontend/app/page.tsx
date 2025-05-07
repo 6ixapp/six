@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Arrow7 from "@/components/svg";
+import Arrow31 from "@/components/svg";
 
 export default function Index() {
   const [text, setText] = useState("");
@@ -78,9 +79,14 @@ export default function Index() {
                 Join The Waitlist
               </Button>
             </Link>
-            <div className="absolute left-2/4  top-[200%] w-2/4">(you can also scroll for more info)</div>
-            <div className="absolute   top-full  left-1/3  ">  <Arrow7 className="rotate-stroke-fuchsia-500 fill-fuchsia-500" style={{transform:'rotateY(45deg)'}}/>
-            </div>
+            <div className="absolute left-[32%] top-[200%] w-2/4 text-sm">
+  (you can also scroll for more info)
+</div>
+
+            <div className="absolute top-[20%] left-[10%] text-purple-600">
+  <Arrow31 className="rotate-stroke-purple-500" style={{ transform: 'rotateY(45deg)' }} />
+</div>
+
             {/* Arrow positioning restored to original but with increased size */}
           
           </div>
