@@ -8,6 +8,7 @@ import { ChevronDown } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     age: "",
@@ -39,17 +40,17 @@ export default function SignupPage() {
     formData.gender &&
     formData.phoneNumber.trim() &&
     isPhoneNumberValid &&
-    formData.instagram.trim() 
-    
+    formData.instagram.trim();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('handleSubmit triggered with:', formData);
 
-   
+    setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/follow', {
+      // Send the form data
+      fetch('https://3691-2409-40d2-a-2016-c5a3-4612-ed35-31bb.ngrok-free.app/api/follow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -60,17 +61,20 @@ export default function SignupPage() {
           age: formData.age,
           lookingFor: userPreference || ''
         }),
+      }).then(async (response) => {
+        const data = await response.json();
+        console.log('Follow response:', data);
+      }).catch((err) => {
+        console.error('Follow error:', err);
       });
-      const data = await response.json();
-      console.log('Follow response:', data);
-      if (data.success) {
+
+      // Wait for 3 seconds before redirecting
+      setTimeout(() => {
         router.push('/results');
-      } else {
-        alert(data.message || 'Request failed');
-      }
+      }, 3000);
     } catch (err) {
-      console.error('Follow error:', err);
-      alert('Network error, please try again');
+      console.error('Error:', err);
+      setIsLoading(false);
     }
   };
 
@@ -178,11 +182,29 @@ export default function SignupPage() {
         <div className="pt-6">
           <button
             type="submit"
-            className="text-white bg-gradient-to-r from-pink-500 to-blue-500 hover:opacity-90 transition-opacity py-2.5 px-6 rounded-full text-lg font-medium mx-auto block -mt-6"
+            disabled={isLoading}
+            className={`text-white bg-gradient-to-r from-pink-500 to-blue-500 hover:opacity-90 transition-opacity py-2.5 px-6 rounded-full text-lg font-medium mx-auto block -mt-6 relative ${
+              isLoading ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
           >
-            Join
+            {isLoading ? (
+              <>
+                <span className="opacity-0">Join</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                </div>
+              </>
+            ) : (
+              'Join'
+            )}
           </button>
         </div>
+
+        {isLoading && (
+          <p className="text-center text-sm text-gray-500 animate-pulse">
+            Processing your request...
+          </p>
+        )}
       </form>
     </main>
   );

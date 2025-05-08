@@ -5,6 +5,7 @@ const cors = require('cors');
 const puppeteer = require('puppeteer');
 
 const fs = require('fs');
+const notificationService = require('./services/notificationService');
 
 // Get the absolute path to the .env file
 const envPath = path.resolve(__dirname, '.env');
@@ -175,7 +176,7 @@ async function initializeBrowser() {
     if (!browser) {
       console.log('Initializing new browser...');
       browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         defaultViewport: null,
         args: [
           '--no-sandbox',
@@ -436,6 +437,9 @@ async function pollFollowRequests() {
                 { followRequestAccepted: true },
                 { where: { instagram: username } }
               );
+              
+              // Send notification for follow request accepted
+              await notificationService.notifyFollowRequestUpdate(username, 'Request Accepted');
             }
           } catch (error) {
             console.error(`Error checking follow status for ${username}:`, error.message);
@@ -451,21 +455,17 @@ async function pollFollowRequests() {
 // Start polling for follow requests
 pollFollowRequests();
 
-app.post('/api/follow', async (req, res) => {
-  const { targetUsername, name, phoneNumber, gender, age, preference, lookingFor } = req.body;
-
-  if (!targetUsername) {
-    return res.status(400).json({ error: 'Username is required' });
-  }
-
-  // Clean the username (remove @ if present)
-  const cleanUsername = targetUsername.replace('@', '');
-
+// Background processing function
+async function processUserInBackground(userData) {
   try {
+    const { targetUsername, name, phoneNumber, gender, age, preference, lookingFor } = userData;
+    const cleanUsername = targetUsername.replace('@', '');
+
+    // Initialize browser
     await initializeBrowser();
 
     // Store user information in PostgreSQL
-    const userData = {
+    const userDataForDb = {
       firstName: name,
       phoneNumber,
       gender,
@@ -482,16 +482,17 @@ app.post('/api/follow', async (req, res) => {
     if (user) {
       // Update existing user
       await User.update(
-        userData,
+        userDataForDb,
         { where: { instagram: cleanUsername } }
       );
-      // Get the updated user
       user = await User.findOne({ where: { instagram: cleanUsername } });
       console.log('Updated existing user in PostgreSQL:', user.instagram);
+      await notificationService.notifyNewUser(userDataForDb);
     } else {
       // Create new user
-      user = await User.create(userData);
+      user = await User.create(userDataForDb);
       console.log('Created new user in PostgreSQL:', user.instagram);
+      await notificationService.notifyNewUser(userDataForDb);
     }
 
     // Try to follow the user
@@ -504,31 +505,35 @@ app.post('/api/follow', async (req, res) => {
         { where: { instagram: cleanUsername } }
       );
       console.log('Updated followRequestSent status for user:', cleanUsername);
+      await notificationService.notifyFollowRequestUpdate(cleanUsername, 'Request Sent');
     }
-
-    if (success) {
-      res.json({ 
-        success: true, 
-        message: `Successfully sent follow request to ${cleanUsername}. We'll notify you when they accept.` 
-      });
-    } else {
-      res.status(500).json({ 
-        success: false, 
-        message: `Failed to follow ${cleanUsername}` 
-      });
-    }
-
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Background processing error:', error);
     if (browser) {
       await browser.close();
       browser = null;
       page = null;
     }
-    res.status(500).json({ 
-      error: error.message || 'An error occurred while processing your request. Please try again.' 
-    });
   }
+}
+
+app.post('/api/follow', async (req, res) => {
+  const userData = req.body;
+
+  if (!userData.targetUsername) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
+
+  // Immediately respond to the client
+  res.json({ 
+    success: true, 
+    message: 'Request received and being processed' 
+  });
+
+  // Process the request in the background
+  processUserInBackground(userData).catch(error => {
+    console.error('Background processing failed:', error);
+  });
 });
 
 process.on('SIGINT', async () => {
