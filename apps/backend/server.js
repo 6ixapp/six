@@ -175,7 +175,7 @@ async function initializeBrowser() {
     if (!browser) {
       console.log('Initializing new browser...');
       browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         defaultViewport: null,
         args: [
           '--no-sandbox',
