@@ -114,7 +114,7 @@ export default function Index() {
   >
     Terms and Conditions
   </Link>
-  <p className="text-[10px] text-gray-400 mt-1">Email: contact@hsks.com</p>
+  <p className="text-[10px] text-gray-400 mt-1">Email: contact@sixsocialapp.com</p>
 </div>
 
         </div>

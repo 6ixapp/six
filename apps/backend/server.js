@@ -80,7 +80,7 @@ async function isLoggedIn(page) {
   try {
     await page.goto('https://www.instagram.com/', { 
       waitUntil: 'networkidle2',
-      timeout: 30000 
+      timeout: 60000 
     });
     
     const loginButton = await page.$('a[href="/accounts/login/"]');
@@ -110,10 +110,10 @@ async function performLogin(page) {
     console.log('Starting login process...');
     await page.goto('https://www.instagram.com/accounts/login/', { 
       waitUntil: 'networkidle2',
-      timeout: 30000 
+      timeout: 300000 
     });
     
-    await page.waitForSelector('input[name="username"]', { timeout: 10000 });
+    await page.waitForSelector('input[name="username"]', { timeout: 60000 });
     console.log('Login form found, entering credentials...');
     
     await page.evaluate(() => {
@@ -126,7 +126,7 @@ async function performLogin(page) {
     
     console.log('Submitting login form...');
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }),
       page.click('button[type="submit"]')
     ]);
     
@@ -188,7 +188,7 @@ async function initializeBrowser() {
       });
       page = await browser.newPage();
       
-      page.setDefaultTimeout(30000);
+      page.setDefaultTimeout(60000);
       
       const cookiesLoaded = await loadCookies(page);
       let loggedIn = false;
@@ -242,7 +242,7 @@ async function followUser(targetUsername) {
 
     await page.goto(`https://www.instagram.com/${targetUsername}/`, { 
       waitUntil: 'networkidle2',
-      timeout: 30000
+      timeout: 60000
     });
 
     await page.waitForSelector('header section', { timeout: 10000 });
@@ -329,7 +329,7 @@ async function checkFollowRequestAccepted(username) {
 
     await page.goto(`https://www.instagram.com/${username}/`, { 
       waitUntil: 'networkidle2',
-      timeout: 30000
+      timeout: 60000
     });
 
     // Wait for the profile page to load
