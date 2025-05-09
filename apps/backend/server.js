@@ -110,25 +110,63 @@ async function performLogin(page) {
   try {
     console.log('Starting login process...');
     
-    // Navigate to Instagram login page
+    // Navigate to Instagram login page with longer timeout
+    console.log('Navigating to Instagram login page...');
     await page.goto('https://www.instagram.com/accounts/login/', { 
       waitUntil: 'networkidle0',
-      timeout: 60000 
+      timeout: 120000 // 2 minutes
     });
     
-    // Wait for either the username input or the logged-in state
+    // Add a delay after navigation
+    await page.waitForTimeout(5000);
+    
+    console.log('Waiting for login page elements...');
+    
+    // Wait for either the username input or the logged-in state with longer timeout
     try {
       await Promise.race([
-        page.waitForSelector('input[name="username"]', { timeout: 30000 }),
-        page.waitForSelector('nav[role="navigation"]', { timeout: 30000 }) // Logged in state
+        page.waitForSelector('input[name="username"]', { 
+          timeout: 60000,  // 1 minute
+          visible: true 
+        }),
+        page.waitForSelector('nav[role="navigation"]', { 
+          timeout: 60000,  // 1 minute
+          visible: true 
+        })
       ]);
+      
+      // Add a small delay after element detection
+      await page.waitForTimeout(2000);
+      
     } catch (error) {
       console.error('Error waiting for login page elements:', error);
+      
+      // Log the current page content for debugging
+      const pageContent = await page.content();
+      console.log('Current page content:', pageContent);
+      
       // Take a screenshot for debugging
       if (process.env.NODE_ENV !== 'production') {
-        await page.screenshot({ path: 'login-error.png' });
+        await page.screenshot({ path: 'login-error.png', fullPage: true });
       }
-      throw new Error('Could not find login form or logged-in state');
+      
+      // Try refreshing the page once
+      console.log('Attempting to refresh the page...');
+      await page.reload({ 
+        waitUntil: 'networkidle0',
+        timeout: 60000 
+      });
+      
+      // Wait again after refresh
+      try {
+        await page.waitForSelector('input[name="username"]', { 
+          timeout: 60000,
+          visible: true 
+        });
+      } catch (retryError) {
+        console.error('Still cannot find login form after refresh:', retryError);
+        throw new Error('Could not find login form or logged-in state after retry');
+      }
     }
     
     // Check if we're already logged in
@@ -143,23 +181,51 @@ async function performLogin(page) {
     
     console.log('Login form found, entering credentials...');
     
+    // Ensure the form is ready
+    await page.waitForFunction(() => {
+      const usernameInput = document.querySelector('input[name="username"]');
+      const passwordInput = document.querySelector('input[name="password"]');
+      return usernameInput && passwordInput && 
+             usernameInput.disabled === false && 
+             passwordInput.disabled === false;
+    }, { timeout: 60000 });
+    
     // Clear any existing values
     await page.evaluate(() => {
       document.querySelector('input[name="username"]').value = '';
       document.querySelector('input[name="password"]').value = '';
     });
     
+    // Add delay between clearing and typing
+    await page.waitForTimeout(1000);
+    
     // Type credentials with random delays
-    await page.type('input[name="username"]', INSTAGRAM_USERNAME, { delay: Math.random() * 100 + 50 });
-    await page.type('input[name="password"]', INSTAGRAM_PASSWORD, { delay: Math.random() * 100 + 50 });
+    await page.type('input[name="username"]', INSTAGRAM_USERNAME, { delay: Math.random() * 100 + 100 });
+    await page.waitForTimeout(1000);
+    await page.type('input[name="password"]', INSTAGRAM_PASSWORD, { delay: Math.random() * 100 + 100 });
     
     console.log('Submitting login form...');
     
+    // Wait for the submit button to be ready
+    await page.waitForSelector('button[type="submit"]', { 
+      visible: true,
+      timeout: 60000 
+    });
+    
+    // Add small delay before clicking
+    await page.waitForTimeout(1000);
+    
     // Click the login button and wait for navigation
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 60000 }),
+      page.waitForNavigation({ 
+        waitUntil: 'networkidle0',
+        timeout: 120000  // 2 minutes
+      }),
       page.click('button[type="submit"]')
     ]);
+    
+    // Add delay after login attempt
+    await page.waitForTimeout(5000);
     
     // Handle potential popups
     try {
@@ -184,7 +250,7 @@ async function performLogin(page) {
       console.log('No notifications popup found');
     }
 
-    // Verify login success
+    // Verify login success with increased timeout
     const loggedIn = await isLoggedIn(page);
     if (loggedIn) {
       console.log('Login successful, saving cookies...');
@@ -194,7 +260,7 @@ async function performLogin(page) {
       console.log('Login verification failed');
       // Take a screenshot for debugging
       if (process.env.NODE_ENV !== 'production') {
-        await page.screenshot({ path: 'login-failed.png' });
+        await page.screenshot({ path: 'login-failed.png', fullPage: true });
       }
       return false;
     }
@@ -202,7 +268,7 @@ async function performLogin(page) {
     console.error('Login error:', error);
     // Take a screenshot for debugging
     if (process.env.NODE_ENV !== 'production') {
-      await page.screenshot({ path: 'login-error.png' });
+      await page.screenshot({ path: 'login-error.png', fullPage: true });
     }
     return false;
   }
@@ -215,92 +281,108 @@ async function initializeBrowser() {
   }
 
   isInitializing = true;
+  let retryCount = 0;
+  const maxRetries = 3;
   
-  try {
-    if (!browser) {
-      console.log('Initializing new browser...');
-      browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--window-size=1920,1080',
-          '--disable-web-security',
-          '--disable-features=IsolateOrigins,site-per-process',
-          '--disable-site-isolation-trials'
-        ],
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-        ignoreHTTPSErrors: true
-      });
-      
-      page = await browser.newPage();
-      
-      // Set a more realistic user agent
-      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-      
-      // Set viewport
-      await page.setViewport({ width: 1280, height: 800 });
-      
-      // Set default timeout
-      page.setDefaultTimeout(120000); // 2 minutes
-      
-      // Enable request interception
-      await page.setRequestInterception(true);
-      
-      // Handle request interception
-      page.on('request', (request) => {
-        if (
-          request.resourceType() === 'image' ||
-          request.resourceType() === 'stylesheet' ||
-          request.resourceType() === 'font'
-        ) {
-          request.abort();
-        } else {
-          request.continue();
-        }
-      });
+  while (retryCount < maxRetries) {
+    try {
+      if (!browser) {
+        console.log(`Initializing browser (attempt ${retryCount + 1}/${maxRetries})...`);
+        browser = await puppeteer.launch({
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--window-size=1920,1080',
+            '--disable-web-security',
+            '--disable-features=IsolateOrigins,site-per-process',
+            '--disable-site-isolation-trials',
+            '--disable-accelerated-2d-canvas',
+            '--disable-canvas-aa',
+            '--disable-2d-canvas-clip-aa',
+            '--disable-gl-drawing-for-tests'
+          ],
+          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
+          ignoreHTTPSErrors: true,
+          timeout: 120000 // 2 minutes
+        });
+        
+        page = await browser.newPage();
+        
+        // Set a more realistic user agent
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        
+        // Set viewport
+        await page.setViewport({ width: 1280, height: 800 });
+        
+        // Set default timeout
+        page.setDefaultTimeout(120000); // 2 minutes
+        
+        // Enable request interception
+        await page.setRequestInterception(true);
+        
+        // Handle request interception
+        page.on('request', (request) => {
+          if (
+            request.resourceType() === 'image' ||
+            request.resourceType() === 'stylesheet' ||
+            request.resourceType() === 'font'
+          ) {
+            request.abort();
+          } else {
+            request.continue();
+          }
+        });
 
-      const cookiesLoaded = await loadCookies(page);
-      let loggedIn = false;
-      
-      if (cookiesLoaded) {
-        console.log('Checking if cookies are still valid...');
-        loggedIn = await isLoggedIn(page);
+        const cookiesLoaded = await loadCookies(page);
+        let loggedIn = false;
+        
+        if (cookiesLoaded) {
+          console.log('Checking if cookies are still valid...');
+          loggedIn = await isLoggedIn(page);
+          
+          if (!loggedIn) {
+            console.log('Cookies expired or invalid, performing fresh login...');
+            await PuppeteerCookies.destroy({
+              where: {},
+              truncate: true
+            });
+            console.log('Deleted invalid cookies from database');
+          }
+        }
         
         if (!loggedIn) {
-          console.log('Cookies expired or invalid, performing fresh login...');
-          await PuppeteerCookies.destroy({
-            where: {},
-            truncate: true
-          });
-          console.log('Deleted invalid cookies from database');
+          console.log('Need to perform fresh login...');
+          loggedIn = await performLogin(page);
         }
+        
+        if (!loggedIn) {
+          throw new Error('Failed to initialize browser and login');
+        }
+        
+        console.log('Browser initialized and logged in successfully');
+        return;
       }
-      
-      if (!loggedIn) {
-        console.log('Need to perform fresh login...');
-        loggedIn = await performLogin(page);
+    } catch (error) {
+      console.error(`Browser initialization attempt ${retryCount + 1} failed:`, error);
+      if (browser) {
+        await browser.close();
+        browser = null;
+        page = null;
       }
-      
-      if (!loggedIn) {
-        throw new Error('Failed to initialize browser and login');
+      retryCount++;
+      if (retryCount < maxRetries) {
+        console.log(`Waiting 10 seconds before retry ${retryCount + 1}...`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      } else {
+        throw new Error(`Failed to initialize browser after ${maxRetries} attempts`);
       }
-      
-      console.log('Browser initialized and logged in successfully');
     }
-  } catch (error) {
-    console.error('Error initializing browser:', error);
-    if (browser) {
-      await browser.close();
-      browser = null;
-      page = null;
-    }
-    throw error;
-  } finally {
-    isInitializing = false;
   }
+  
+  isInitializing = false;
 }
 
 async function followUser(targetUsername) {
