@@ -36,10 +36,9 @@ app.use(express.static('public')); // Serve static files from 'public' directory
 
 const INSTAGRAM_USERNAME = process.env.IG_USERNAME;
 const INSTAGRAM_PASSWORD = process.env.IG_PASSWORD;
-const COOKIES_PATH = path.join(__dirname, 'cookies.json');
 
 // Import PostgreSQL models
-const { User, syncDatabase } = require('./models/sequelize');
+const { User, PuppeteerCookies, syncDatabase } = require('./models/sequelize');
 
 // Initialize PostgreSQL database
 syncDatabase()
@@ -53,8 +52,8 @@ let isInitializing = false;
 async function saveCookies(page) {
   try {
     const cookies = await page.cookies();
-    await fs.promises.writeFile(COOKIES_PATH, JSON.stringify(cookies, null, 2));
-    console.log('Cookies saved successfully');
+    await PuppeteerCookies.create({ data: cookies });
+    console.log('Cookies saved successfully to database');
   } catch (error) {
     console.error('Error saving cookies:', error);
   }
@@ -62,14 +61,16 @@ async function saveCookies(page) {
 
 async function loadCookies(page) {
   try {
-    if (fs.existsSync(COOKIES_PATH)) {
-      const cookiesString = await fs.promises.readFile(COOKIES_PATH);
-      const cookies = JSON.parse(cookiesString);
-      await page.setCookie(...cookies);
-      console.log('Cookies loaded successfully');
+    const lastCookies = await PuppeteerCookies.findOne({
+      order: [['updated_at', 'DESC']]
+    });
+
+    if (lastCookies) {
+      await page.setCookie(...lastCookies.data);
+      console.log('Cookies loaded successfully from database');
       return true;
     }
-    console.log('No cookies file found');
+    console.log('No cookies found in database');
     return false;
   } catch (error) {
     console.error('Error loading cookies:', error);
@@ -176,8 +177,7 @@ async function initializeBrowser() {
     if (!browser) {
       console.log('Initializing new browser...');
       browser = await puppeteer.launch({
-        headless: false,
-        defaultViewport: null,
+        headless: true,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -185,10 +185,11 @@ async function initializeBrowser() {
           '--disable-gpu',
           '--window-size=1920,1080'
         ],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
         ignoreHTTPSErrors: true
       });
-      page = await browser.newPage();
       
+      page = await browser.newPage();
       page.setDefaultTimeout(60000);
       
       const cookiesLoaded = await loadCookies(page);
@@ -200,10 +201,12 @@ async function initializeBrowser() {
         
         if (!loggedIn) {
           console.log('Cookies expired or invalid, performing fresh login...');
-          if (fs.existsSync(COOKIES_PATH)) {
-            fs.unlinkSync(COOKIES_PATH);
-            console.log('Deleted invalid cookies');
-          }
+          // Delete expired cookies from database
+          await PuppeteerCookies.destroy({
+            where: {},
+            truncate: true
+          });
+          console.log('Deleted invalid cookies from database');
         }
       }
       
@@ -543,6 +546,14 @@ process.on('SIGINT', async () => {
   process.exit();
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Initialize database and start server
+syncDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to initialize:', err);
+    process.exit(1);
+  });

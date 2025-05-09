@@ -1,5 +1,6 @@
 const { sequelize, testConnection } = require('../../config/database');
 const User = require('./User');
+const PuppeteerCookies = require('./PuppeteerCookies');
 
 // Define relationships between models here if needed
 // For example: User.hasMany(SomeOtherModel)
@@ -28,5 +29,6 @@ const syncDatabase = async () => {
 module.exports = {
   sequelize,
   User,
+  PuppeteerCookies,
   syncDatabase
 };
