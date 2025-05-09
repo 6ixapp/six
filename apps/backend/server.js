@@ -1,33 +1,35 @@
-const dotenv = require('dotenv');
-const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
+const path = require('path');
 
-const fs = require('fs');
+// Only load dotenv in development
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+  console.log('Loaded .env file in development mode');
+}
+
+const { User, PuppeteerCookies, syncDatabase } = require('./models/sequelize');
 const notificationService = require('./services/notificationService');
-
-// Get the absolute path to the .env file
-const envPath = path.resolve(__dirname, '.env');
-console.log('Loading .env file from:', envPath);
-
-// Check if the .env file exists
-if (fs.existsSync(envPath)) {
-  console.log('.env file exists at the specified path');
-} else {
-  console.error('ERROR: .env file does not exist at the specified path');
-}
-
-// Load environment variables from .env file with explicit path
-const result = dotenv.config({ path: envPath });
-if (result.error) {
-  console.error('Error loading .env file:', result.error);
-} else {
-  console.log('.env file loaded successfully');
-}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Validate required environment variables
+const requiredEnvVars = [
+  'IG_USERNAME',
+  'IG_PASSWORD',
+  'DATABASE_URL',
+  'TELEGRAM_BOT_TOKEN',
+  'TELEGRAM_CHANNEL_ID'
+];
+
+const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+
+if (missingEnvVars.length > 0) {
+  console.error('Missing required environment variables:', missingEnvVars.join(', '));
+  process.exit(1);
+}
 
 // Middleware
 app.use(cors());
@@ -36,9 +38,6 @@ app.use(express.static('public')); // Serve static files from 'public' directory
 
 const INSTAGRAM_USERNAME = process.env.IG_USERNAME;
 const INSTAGRAM_PASSWORD = process.env.IG_PASSWORD;
-
-// Import PostgreSQL models
-const { User, PuppeteerCookies, syncDatabase } = require('./models/sequelize');
 
 // Initialize PostgreSQL database
 syncDatabase()
