@@ -50,7 +50,7 @@ export default function SignupPage() {
 
     try {
       // Send the form data
-      fetch('https://3691-2409-40d2-a-2016-c5a3-4612-ed35-31bb.ngrok-free.app/api/follow', {
+      fetch('https://six-production.up.railway.app/api/follow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -109,46 +109,82 @@ async function isLoggedIn(page) {
 async function performLogin(page) {
   try {
     console.log('Starting login process...');
+    
+    // Navigate to Instagram login page
     await page.goto('https://www.instagram.com/accounts/login/', { 
-      waitUntil: 'networkidle2',
-      timeout: 300000 
+      waitUntil: 'networkidle0',
+      timeout: 60000 
     });
     
-    await page.waitForSelector('input[name="username"]', { timeout: 60000 });
+    // Wait for either the username input or the logged-in state
+    try {
+      await Promise.race([
+        page.waitForSelector('input[name="username"]', { timeout: 30000 }),
+        page.waitForSelector('nav[role="navigation"]', { timeout: 30000 }) // Logged in state
+      ]);
+    } catch (error) {
+      console.error('Error waiting for login page elements:', error);
+      // Take a screenshot for debugging
+      if (process.env.NODE_ENV !== 'production') {
+        await page.screenshot({ path: 'login-error.png' });
+      }
+      throw new Error('Could not find login form or logged-in state');
+    }
+    
+    // Check if we're already logged in
+    const isAlreadyLoggedIn = await page.evaluate(() => {
+      return !!document.querySelector('nav[role="navigation"]');
+    });
+    
+    if (isAlreadyLoggedIn) {
+      console.log('Already logged in!');
+      return true;
+    }
+    
     console.log('Login form found, entering credentials...');
     
+    // Clear any existing values
     await page.evaluate(() => {
       document.querySelector('input[name="username"]').value = '';
       document.querySelector('input[name="password"]').value = '';
     });
     
-    await page.type('input[name="username"]', INSTAGRAM_USERNAME, { delay: 100 });
-    await page.type('input[name="password"]', INSTAGRAM_PASSWORD, { delay: 100 });
+    // Type credentials with random delays
+    await page.type('input[name="username"]', INSTAGRAM_USERNAME, { delay: Math.random() * 100 + 50 });
+    await page.type('input[name="password"]', INSTAGRAM_PASSWORD, { delay: Math.random() * 100 + 50 });
     
     console.log('Submitting login form...');
+    
+    // Click the login button and wait for navigation
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }),
+      page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 60000 }),
       page.click('button[type="submit"]')
     ]);
     
+    // Handle potential popups
     try {
       console.log('Checking for save login info popup...');
-      await page.waitForSelector('button._acan._acap._acas._aj1-', { timeout: 5000 });
-      await page.click('button._acan._acap._acas._aj1-');
-      console.log('Handled save login info popup');
+      const saveInfoButton = await page.waitForSelector('button._acan._acap._acas._aj1-', { timeout: 5000 });
+      if (saveInfoButton) {
+        await saveInfoButton.click();
+        console.log('Handled save login info popup');
+      }
     } catch (e) {
       console.log('No save login info popup found');
     }
 
     try {
       console.log('Checking for notifications popup...');
-      await page.waitForSelector('button._a9--._a9_1', { timeout: 5000 });
-      await page.click('button._a9--._a9_1');
-      console.log('Handled notifications popup');
+      const notificationButton = await page.waitForSelector('button._a9--._a9_1', { timeout: 5000 });
+      if (notificationButton) {
+        await notificationButton.click();
+        console.log('Handled notifications popup');
+      }
     } catch (e) {
       console.log('No notifications popup found');
     }
 
+    // Verify login success
     const loggedIn = await isLoggedIn(page);
     if (loggedIn) {
       console.log('Login successful, saving cookies...');
@@ -156,10 +192,18 @@ async function performLogin(page) {
       return true;
     } else {
       console.log('Login verification failed');
+      // Take a screenshot for debugging
+      if (process.env.NODE_ENV !== 'production') {
+        await page.screenshot({ path: 'login-failed.png' });
+      }
       return false;
     }
   } catch (error) {
     console.error('Login error:', error);
+    // Take a screenshot for debugging
+    if (process.env.NODE_ENV !== 'production') {
+      await page.screenshot({ path: 'login-error.png' });
+    }
     return false;
   }
 }
@@ -182,15 +226,42 @@ async function initializeBrowser() {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--window-size=1920,1080'
+          '--window-size=1920,1080',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process',
+          '--disable-site-isolation-trials'
         ],
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
         ignoreHTTPSErrors: true
       });
       
       page = await browser.newPage();
-      page.setDefaultTimeout(60000);
       
+      // Set a more realistic user agent
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+      
+      // Set viewport
+      await page.setViewport({ width: 1280, height: 800 });
+      
+      // Set default timeout
+      page.setDefaultTimeout(120000); // 2 minutes
+      
+      // Enable request interception
+      await page.setRequestInterception(true);
+      
+      // Handle request interception
+      page.on('request', (request) => {
+        if (
+          request.resourceType() === 'image' ||
+          request.resourceType() === 'stylesheet' ||
+          request.resourceType() === 'font'
+        ) {
+          request.abort();
+        } else {
+          request.continue();
+        }
+      });
+
       const cookiesLoaded = await loadCookies(page);
       let loggedIn = false;
       
@@ -200,7 +271,6 @@ async function initializeBrowser() {
         
         if (!loggedIn) {
           console.log('Cookies expired or invalid, performing fresh login...');
-          // Delete expired cookies from database
           await PuppeteerCookies.destroy({
             where: {},
             truncate: true
