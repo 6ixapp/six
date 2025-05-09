@@ -1,35 +1,33 @@
+const dotenv = require('dotenv');
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
-const path = require('path');
 
-// Only load dotenv in development
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-  console.log('Loaded .env file in development mode');
+const fs = require('fs');
+const notificationService = require('./services/notificationService');
+
+// Get the absolute path to the .env file
+const envPath = path.resolve(__dirname, '.env');
+console.log('Loading .env file from:', envPath);
+
+// Check if the .env file exists
+if (fs.existsSync(envPath)) {
+  console.log('.env file exists at the specified path');
+} else {
+  console.error('ERROR: .env file does not exist at the specified path');
 }
 
-const { User, PuppeteerCookies, syncDatabase } = require('./models/sequelize');
-const notificationService = require('./services/notificationService');
+// Load environment variables from .env file with explicit path
+const result = dotenv.config({ path: envPath });
+if (result.error) {
+  console.error('Error loading .env file:', result.error);
+} else {
+  console.log('.env file loaded successfully');
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Validate required environment variables
-const requiredEnvVars = [
-  'IG_USERNAME',
-  'IG_PASSWORD',
-  'DATABASE_URL',
-  'TELEGRAM_BOT_TOKEN',
-  'TELEGRAM_CHANNEL_ID'
-];
-
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
-
-if (missingEnvVars.length > 0) {
-  console.error('Missing required environment variables:', missingEnvVars.join(', '));
-  process.exit(1);
-}
 
 // Middleware
 app.use(cors());
@@ -38,6 +36,10 @@ app.use(express.static('public')); // Serve static files from 'public' directory
 
 const INSTAGRAM_USERNAME = process.env.IG_USERNAME;
 const INSTAGRAM_PASSWORD = process.env.IG_PASSWORD;
+const COOKIES_PATH = path.join(__dirname, 'cookies.json');
+
+// Import PostgreSQL models
+const { User, syncDatabase } = require('./models/sequelize');
 
 // Initialize PostgreSQL database
 syncDatabase()
@@ -51,8 +53,8 @@ let isInitializing = false;
 async function saveCookies(page) {
   try {
     const cookies = await page.cookies();
-    await PuppeteerCookies.create({ data: cookies });
-    console.log('Cookies saved successfully to database');
+    await fs.promises.writeFile(COOKIES_PATH, JSON.stringify(cookies, null, 2));
+    console.log('Cookies saved successfully');
   } catch (error) {
     console.error('Error saving cookies:', error);
   }
@@ -60,16 +62,14 @@ async function saveCookies(page) {
 
 async function loadCookies(page) {
   try {
-    const lastCookies = await PuppeteerCookies.findOne({
-      order: [['updated_at', 'DESC']]
-    });
-
-    if (lastCookies) {
-      await page.setCookie(...lastCookies.data);
-      console.log('Cookies loaded successfully from database');
+    if (fs.existsSync(COOKIES_PATH)) {
+      const cookiesString = await fs.promises.readFile(COOKIES_PATH);
+      const cookies = JSON.parse(cookiesString);
+      await page.setCookie(...cookies);
+      console.log('Cookies loaded successfully');
       return true;
     }
-    console.log('No cookies found in database');
+    console.log('No cookies file found');
     return false;
   } catch (error) {
     console.error('Error loading cookies:', error);
@@ -109,148 +109,46 @@ async function isLoggedIn(page) {
 async function performLogin(page) {
   try {
     console.log('Starting login process...');
-    
-    // Navigate to Instagram login page with longer timeout
-    console.log('Navigating to Instagram login page...');
     await page.goto('https://www.instagram.com/accounts/login/', { 
-      waitUntil: 'networkidle0',
-      timeout: 120000 // 2 minutes
+      waitUntil: 'networkidle2',
+      timeout: 300000 
     });
     
-    // Add a delay after navigation
-    await page.waitForTimeout(5000);
-    
-    console.log('Waiting for login page elements...');
-    
-    // Wait for either the username input or the logged-in state with longer timeout
-    try {
-      await Promise.race([
-        page.waitForSelector('input[name="username"]', { 
-          timeout: 60000,  // 1 minute
-          visible: true 
-        }),
-        page.waitForSelector('nav[role="navigation"]', { 
-          timeout: 60000,  // 1 minute
-          visible: true 
-        })
-      ]);
-      
-      // Add a small delay after element detection
-      await page.waitForTimeout(2000);
-      
-    } catch (error) {
-      console.error('Error waiting for login page elements:', error);
-      
-      // Log the current page content for debugging
-      const pageContent = await page.content();
-      console.log('Current page content:', pageContent);
-      
-      // Take a screenshot for debugging
-      if (process.env.NODE_ENV !== 'production') {
-        await page.screenshot({ path: 'login-error.png', fullPage: true });
-      }
-      
-      // Try refreshing the page once
-      console.log('Attempting to refresh the page...');
-      await page.reload({ 
-        waitUntil: 'networkidle0',
-        timeout: 60000 
-      });
-      
-      // Wait again after refresh
-      try {
-        await page.waitForSelector('input[name="username"]', { 
-          timeout: 60000,
-          visible: true 
-        });
-      } catch (retryError) {
-        console.error('Still cannot find login form after refresh:', retryError);
-        throw new Error('Could not find login form or logged-in state after retry');
-      }
-    }
-    
-    // Check if we're already logged in
-    const isAlreadyLoggedIn = await page.evaluate(() => {
-      return !!document.querySelector('nav[role="navigation"]');
-    });
-    
-    if (isAlreadyLoggedIn) {
-      console.log('Already logged in!');
-      return true;
-    }
-    
+    await page.waitForSelector('input[name="username"]', { timeout: 60000 });
     console.log('Login form found, entering credentials...');
     
-    // Ensure the form is ready
-    await page.waitForFunction(() => {
-      const usernameInput = document.querySelector('input[name="username"]');
-      const passwordInput = document.querySelector('input[name="password"]');
-      return usernameInput && passwordInput && 
-             usernameInput.disabled === false && 
-             passwordInput.disabled === false;
-    }, { timeout: 60000 });
-    
-    // Clear any existing values
     await page.evaluate(() => {
       document.querySelector('input[name="username"]').value = '';
       document.querySelector('input[name="password"]').value = '';
     });
     
-    // Add delay between clearing and typing
-    await page.waitForTimeout(1000);
-    
-    // Type credentials with random delays
-    await page.type('input[name="username"]', INSTAGRAM_USERNAME, { delay: Math.random() * 100 + 100 });
-    await page.waitForTimeout(1000);
-    await page.type('input[name="password"]', INSTAGRAM_PASSWORD, { delay: Math.random() * 100 + 100 });
+    await page.type('input[name="username"]', INSTAGRAM_USERNAME, { delay: 100 });
+    await page.type('input[name="password"]', INSTAGRAM_PASSWORD, { delay: 100 });
     
     console.log('Submitting login form...');
-    
-    // Wait for the submit button to be ready
-    await page.waitForSelector('button[type="submit"]', { 
-      visible: true,
-      timeout: 60000 
-    });
-    
-    // Add small delay before clicking
-    await page.waitForTimeout(1000);
-    
-    // Click the login button and wait for navigation
     await Promise.all([
-      page.waitForNavigation({ 
-        waitUntil: 'networkidle0',
-        timeout: 120000  // 2 minutes
-      }),
+      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 60000 }),
       page.click('button[type="submit"]')
     ]);
     
-    // Add delay after login attempt
-    await page.waitForTimeout(5000);
-    
-    // Handle potential popups
     try {
       console.log('Checking for save login info popup...');
-      const saveInfoButton = await page.waitForSelector('button._acan._acap._acas._aj1-', { timeout: 5000 });
-      if (saveInfoButton) {
-        await saveInfoButton.click();
-        console.log('Handled save login info popup');
-      }
+      await page.waitForSelector('button._acan._acap._acas._aj1-', { timeout: 5000 });
+      await page.click('button._acan._acap._acas._aj1-');
+      console.log('Handled save login info popup');
     } catch (e) {
       console.log('No save login info popup found');
     }
 
     try {
       console.log('Checking for notifications popup...');
-      const notificationButton = await page.waitForSelector('button._a9--._a9_1', { timeout: 5000 });
-      if (notificationButton) {
-        await notificationButton.click();
-        console.log('Handled notifications popup');
-      }
+      await page.waitForSelector('button._a9--._a9_1', { timeout: 5000 });
+      await page.click('button._a9--._a9_1');
+      console.log('Handled notifications popup');
     } catch (e) {
       console.log('No notifications popup found');
     }
 
-    // Verify login success with increased timeout
     const loggedIn = await isLoggedIn(page);
     if (loggedIn) {
       console.log('Login successful, saving cookies...');
@@ -258,18 +156,10 @@ async function performLogin(page) {
       return true;
     } else {
       console.log('Login verification failed');
-      // Take a screenshot for debugging
-      if (process.env.NODE_ENV !== 'production') {
-        await page.screenshot({ path: 'login-failed.png', fullPage: true });
-      }
       return false;
     }
   } catch (error) {
     console.error('Login error:', error);
-    // Take a screenshot for debugging
-    if (process.env.NODE_ENV !== 'production') {
-      await page.screenshot({ path: 'login-error.png', fullPage: true });
-    }
     return false;
   }
 }
@@ -281,108 +171,64 @@ async function initializeBrowser() {
   }
 
   isInitializing = true;
-  let retryCount = 0;
-  const maxRetries = 3;
   
-  while (retryCount < maxRetries) {
-    try {
-      if (!browser) {
-        console.log(`Initializing browser (attempt ${retryCount + 1}/${maxRetries})...`);
-        browser = await puppeteer.launch({
-          headless: true,
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--window-size=1920,1080',
-            '--disable-web-security',
-            '--disable-features=IsolateOrigins,site-per-process',
-            '--disable-site-isolation-trials',
-            '--disable-accelerated-2d-canvas',
-            '--disable-canvas-aa',
-            '--disable-2d-canvas-clip-aa',
-            '--disable-gl-drawing-for-tests'
-          ],
-          executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-          ignoreHTTPSErrors: true,
-          timeout: 120000 // 2 minutes
-        });
-        
-        page = await browser.newPage();
-        
-        // Set a more realistic user agent
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-        
-        // Set viewport
-        await page.setViewport({ width: 1280, height: 800 });
-        
-        // Set default timeout
-        page.setDefaultTimeout(120000); // 2 minutes
-        
-        // Enable request interception
-        await page.setRequestInterception(true);
-        
-        // Handle request interception
-        page.on('request', (request) => {
-          if (
-            request.resourceType() === 'image' ||
-            request.resourceType() === 'stylesheet' ||
-            request.resourceType() === 'font'
-          ) {
-            request.abort();
-          } else {
-            request.continue();
-          }
-        });
-
-        const cookiesLoaded = await loadCookies(page);
-        let loggedIn = false;
-        
-        if (cookiesLoaded) {
-          console.log('Checking if cookies are still valid...');
-          loggedIn = await isLoggedIn(page);
-          
-          if (!loggedIn) {
-            console.log('Cookies expired or invalid, performing fresh login...');
-            await PuppeteerCookies.destroy({
-              where: {},
-              truncate: true
-            });
-            console.log('Deleted invalid cookies from database');
-          }
-        }
+  try {
+    if (!browser) {
+      console.log('Initializing new browser...');
+      browser = await puppeteer.launch({
+        headless: false,
+        defaultViewport: null,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--window-size=1920,1080'
+        ],
+        ignoreHTTPSErrors: true
+      });
+      page = await browser.newPage();
+      
+      page.setDefaultTimeout(60000);
+      
+      const cookiesLoaded = await loadCookies(page);
+      let loggedIn = false;
+      
+      if (cookiesLoaded) {
+        console.log('Checking if cookies are still valid...');
+        loggedIn = await isLoggedIn(page);
         
         if (!loggedIn) {
-          console.log('Need to perform fresh login...');
-          loggedIn = await performLogin(page);
+          console.log('Cookies expired or invalid, performing fresh login...');
+          if (fs.existsSync(COOKIES_PATH)) {
+            fs.unlinkSync(COOKIES_PATH);
+            console.log('Deleted invalid cookies');
+          }
         }
-        
-        if (!loggedIn) {
-          throw new Error('Failed to initialize browser and login');
-        }
-        
-        console.log('Browser initialized and logged in successfully');
-        return;
       }
-    } catch (error) {
-      console.error(`Browser initialization attempt ${retryCount + 1} failed:`, error);
-      if (browser) {
-        await browser.close();
-        browser = null;
-        page = null;
+      
+      if (!loggedIn) {
+        console.log('Need to perform fresh login...');
+        loggedIn = await performLogin(page);
       }
-      retryCount++;
-      if (retryCount < maxRetries) {
-        console.log(`Waiting 10 seconds before retry ${retryCount + 1}...`);
-        await new Promise(resolve => setTimeout(resolve, 10000));
-      } else {
-        throw new Error(`Failed to initialize browser after ${maxRetries} attempts`);
+      
+      if (!loggedIn) {
+        throw new Error('Failed to initialize browser and login');
       }
+      
+      console.log('Browser initialized and logged in successfully');
     }
+  } catch (error) {
+    console.error('Error initializing browser:', error);
+    if (browser) {
+      await browser.close();
+      browser = null;
+      page = null;
+    }
+    throw error;
+  } finally {
+    isInitializing = false;
   }
-  
-  isInitializing = false;
 }
 
 async function followUser(targetUsername) {
@@ -697,14 +543,6 @@ process.on('SIGINT', async () => {
   process.exit();
 });
 
-// Initialize database and start server
-syncDatabase()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('Failed to initialize:', err);
-    process.exit(1);
-  });
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

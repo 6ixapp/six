@@ -1,7 +1,7 @@
-# Use Node.js base image
+# Use Node.js 18 as base image
 FROM node:18-slim
 
-# Install required dependencies
+# Install dependencies for Puppeteer
 RUN apt-get update \
     && apt-get install -y wget gnupg \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
@@ -12,13 +12,13 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install app dependencies
+RUN npm install
 
 # Copy app source
 COPY . .
@@ -27,17 +27,12 @@ COPY . .
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 
-# Add user so we don't need --no-sandbox
-RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
-    && mkdir -p /home/pptruser/Downloads \
-    && chown -R pptruser:pptruser /home/pptruser \
-    && chown -R pptruser:pptruser /app
-
-# Run everything after as non-privileged user
-USER pptruser
-
-# Expose the port
+# Expose the port the app runs on
+ENV PORT=5000
 EXPOSE 5000
 
-# Start the app
+# Create directory for cookies
+RUN mkdir -p /usr/src/app/cookies
+
+# Start the application
 CMD ["node", "server.js"] 

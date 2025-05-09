@@ -1,23 +1,19 @@
 const axios = require('axios');
-
-// Only load dotenv in development
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config();
-}
+require('dotenv').config();
 
 class NotificationService {
   constructor() {
     this.telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
     this.channelId = process.env.TELEGRAM_CHANNEL_ID; // Channel ID should start with -100
-
-    if (!this.telegramBotToken || !this.channelId) {
-      console.error('Telegram credentials not configured');
-      process.exit(1);
-    }
   }
 
   async sendTelegramNotification(message) {
     try {
+      if (!this.telegramBotToken || !this.channelId) {
+        console.error('Telegram credentials not configured');
+        return;
+      }
+
       const url = `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`;
       await axios.post(url, {
         chat_id: this.channelId,
