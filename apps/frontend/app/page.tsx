@@ -82,7 +82,7 @@ export default function Index() {
               (you can also scroll for more info)
             </div>
 
-            <div className="absolute top-[20%] left-[10%] text-purple-600">
+            <div className="absolute top-[20%] left-[10%] text-purple-600 pointer-events-none">
               <Arrow31 className="rotate-stroke-purple-500" style={{ transform: "rotateY(45deg)" }} />
             </div>
           </div>

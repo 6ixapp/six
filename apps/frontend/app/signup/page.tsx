@@ -46,12 +46,11 @@ export default function SignupPage() {
     e.preventDefault();
     console.log('handleSubmit triggered with:', formData);
 
-    try {
-      // First, redirect the user immediately
-      router.push('/results');
+    setIsLoading(true);
 
-      // Then, send the form data in the background
-      fetch(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/follow', {
+    try {
+      // Send the form data
+      fetch('http://18.224.170.35:5000/api/follow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -68,8 +67,14 @@ export default function SignupPage() {
       }).catch((err) => {
         console.error('Follow error:', err);
       });
+
+      // Wait for 3 seconds before redirecting
+      setTimeout(() => {
+        router.push('/results');
+      }, 3000);
     } catch (err) {
       console.error('Error:', err);
+      setIsLoading(false);
     }
   };
 

@@ -39,7 +39,11 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
-
+  scrapingStatus: {
+    type: DataTypes.ENUM('pending', 'done', 'failed'),
+    defaultValue: 'pending',
+    allowNull: false
+  },
   createdAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW

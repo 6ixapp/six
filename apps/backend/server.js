@@ -3,9 +3,44 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
-
 const fs = require('fs');
 const notificationService = require('./services/notificationService');
+
+// Process error handling
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Perform cleanup
+  if (browser) {
+    browser.close().catch(console.error);
+  }
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Perform cleanup
+  if (browser) {
+    browser.close().catch(console.error);
+  }
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received. Starting graceful shutdown...');
+  if (browser) {
+    await browser.close();
+  }
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received. Starting graceful shutdown...');
+  if (browser) {
+    await browser.close();
+  }
+  process.exit(0);
+});
 
 // Get the absolute path to the .env file
 const envPath = path.resolve(__dirname, '.env');
@@ -176,18 +211,24 @@ async function initializeBrowser() {
     if (!browser) {
       console.log('Initializing new browser...');
       browser = await puppeteer.launch({
-        headless: false,
+        headless: 'true',  // Use new headless mode
         defaultViewport: null,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--window-size=1920,1080'
+          '--window-size=1920,1080',
+          '--disable-web-security',
+          '--disable-features=IsolateOrigins,site-per-process'
         ],
-        ignoreHTTPSErrors: true
+        ignoreHTTPSErrors: true,
+        executablePath: process.env.CHROME_PATH || undefined // Allow custom Chrome path for EC2
       });
       page = await browser.newPage();
+      
+      // Set a more realistic user agent
+      await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
       
       page.setDefaultTimeout(60000);
       
@@ -534,13 +575,6 @@ app.post('/api/follow', async (req, res) => {
   processUserInBackground(userData).catch(error => {
     console.error('Background processing failed:', error);
   });
-});
-
-process.on('SIGINT', async () => {
-  if (browser) {
-    await browser.close();
-  }
-  process.exit();
 });
 
 app.listen(PORT, () => {
