@@ -32,28 +32,64 @@ if (!DATABASE_URL) {
 
 console.log('Initializing PostgreSQL connection with URL:', DATABASE_URL);
 
-// Create a new Sequelize instance
+// Create a new Sequelize instance with retry logic
 const sequelize = new Sequelize(DATABASE_URL, {
   dialect: 'postgres',
-  logging: console.log, // Log SQL queries for debugging
+  logging: (msg) => console.log('Database:', msg), // Enhanced logging
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false // This is needed if you're using a self-signed certificate
+      rejectUnauthorized: false
     }
+  },
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  },
+  retry: {
+    max: 3, // Maximum retry attempts
+    match: [
+      /SequelizeConnectionError/,
+      /SequelizeConnectionRefusedError/,
+      /SequelizeHostNotFoundError/,
+      /SequelizeHostNotReachableError/,
+      /SequelizeInvalidConnectionError/,
+      /SequelizeConnectionTimedOutError/,
+      /TimeoutError/
+    ]
   }
 });
 
-// Test the connection
-const testConnection = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Connection to PostgreSQL has been established successfully.');
-    return true;
-  } catch (error) {
-    console.error('Unable to connect to the PostgreSQL database:', error);
-    return false;
+// Test the connection with retry logic
+const testConnection = async (retries = 3) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await sequelize.authenticate();
+      console.log('Connection to PostgreSQL has been established successfully.');
+      return true;
+    } catch (error) {
+      console.error(`Connection attempt ${i + 1} failed:`, error.message);
+      if (i === retries - 1) {
+        console.error('All connection attempts failed');
+        return false;
+      }
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+    }
   }
+  return false;
 };
+
+// Handle connection errors
+sequelize.authenticate()
+  .then(() => {
+    console.log('Database connection established successfully.');
+  })
+  .catch(err => {
+    console.error('Unable to connect to the database:', err);
+    process.exit(1);
+  });
 
 module.exports = { sequelize, testConnection };

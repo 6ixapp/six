@@ -66,6 +66,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
+
 app.use(express.json());
 app.use(express.static('public')); // Serve static files from 'public' directory
 
@@ -499,6 +500,7 @@ pollFollowRequests();
 // Background processing function
 async function processUserInBackground(userData) {
   try {
+    console.log('Starting background processing for user:', userData);
     const { targetUsername, name, phoneNumber, gender, age, preference, lookingFor } = userData;
     const cleanUsername = targetUsername.replace('@', '');
 
@@ -514,42 +516,75 @@ async function processUserInBackground(userData) {
       instagram: cleanUsername,
       preference: preference || '',
       lookingFor: lookingFor || '',
-      followRequestSent: false
+      followRequestSent: false,
+      scrapingStatus: 'pending'  // Add initial scraping status
     };
+    
+    console.log('Attempting to save user data:', userDataForDb);
     
     // Check if user already exists
     let user = await User.findOne({ where: { instagram: cleanUsername } });
     
     if (user) {
+      console.log('Updating existing user:', cleanUsername);
       // Update existing user
-      await User.update(
+      const [updateCount] = await User.update(
         userDataForDb,
         { where: { instagram: cleanUsername } }
       );
+      console.log('Update result:', updateCount, 'rows affected');
+      
       user = await User.findOne({ where: { instagram: cleanUsername } });
-      console.log('Updated existing user in PostgreSQL:', user.instagram);
+      console.log('Updated user data:', user.toJSON());
       await notificationService.notifyNewUser(userDataForDb);
     } else {
+      console.log('Creating new user:', cleanUsername);
       // Create new user
       user = await User.create(userDataForDb);
-      console.log('Created new user in PostgreSQL:', user.instagram);
+      console.log('Created new user:', user.toJSON());
       await notificationService.notifyNewUser(userDataForDb);
     }
 
     // Try to follow the user
+    console.log('Attempting to follow user:', cleanUsername);
     const success = await followUser(cleanUsername);
     
     // Update follow request status in database
     if (success) {
-      await User.update(
-        { followRequestSent: true },
+      console.log('Follow successful, updating database');
+      const [updateCount] = await User.update(
+        { 
+          followRequestSent: true,
+          scrapingStatus: 'done'
+        },
         { where: { instagram: cleanUsername } }
       );
-      console.log('Updated followRequestSent status for user:', cleanUsername);
+      console.log('Updated follow status:', updateCount, 'rows affected');
       await notificationService.notifyFollowRequestUpdate(cleanUsername, 'Request Sent');
+    } else {
+      console.log('Follow failed, updating status');
+      await User.update(
+        { 
+          scrapingStatus: 'failed'
+        },
+        { where: { instagram: cleanUsername } }
+      );
     }
   } catch (error) {
     console.error('Background processing error:', error);
+    // Try to update user status to failed
+    try {
+      if (userData && userData.targetUsername) {
+        const cleanUsername = userData.targetUsername.replace('@', '');
+        await User.update(
+          { scrapingStatus: 'failed' },
+          { where: { instagram: cleanUsername } }
+        );
+      }
+    } catch (updateError) {
+      console.error('Failed to update error status:', updateError);
+    }
+    
     if (browser) {
       await browser.close();
       browser = null;
