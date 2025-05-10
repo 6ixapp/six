@@ -50,7 +50,7 @@ export default function SignupPage() {
 
     try {
       // Send the form data
-      fetch('http://18.224.170.35:5000/api/follow', {
+      fetch('http://ec2-18-224-170-35.us-east-2.compute.amazonaws.com:5000/api/follow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
