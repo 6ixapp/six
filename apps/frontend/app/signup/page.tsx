@@ -50,7 +50,7 @@ export default function SignupPage() {
 
     try {
       // Send the form data
-      fetch('http://localhost:5000/api/follow', {
+      fetch('https://api.sixsocialapp.com/api/follow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
