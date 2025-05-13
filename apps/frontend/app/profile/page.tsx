@@ -52,36 +52,31 @@ export default function ProfileSetup() {
     setIsLoading(false)
   }
 
-  const handleInstagramClick = async () => {
+  const handleInstagramClick = () => {
     setSelectedOption("instagram")
-    setIsLoading(true)
-    try {
-      // Send notification about Instagram selection
-      await fetch('/api/upload-photo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          source: 'instagram'
-        }),
-      });
-      
-      // Navigate to results page immediately
-      window.location.href = '/signup'
-    } catch (error) {
-      console.error('Error processing Instagram selection:', error);
-      alert('Failed to process Instagram selection. Please try again.');
-    }
-    setIsLoading(false);
   }
 
   const handleSubmit = async () => {
-    if (selectedOption === "instagram") {
-      handleInstagramClick();
-    } else if (selectedOption === "camera" && profileImage) {
-      // Send final notification for camera upload
-      try {
+    if (!selectedOption) {
+      alert("Please select a photo option first")
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      if (selectedOption === "instagram") {
+        // Send notification about Instagram selection
+        await fetch('/api/upload-photo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            source: 'instagram'
+          }),
+        });
+      } else if (selectedOption === "camera" && profileImage) {
+        // Send final notification for camera upload
         await fetch('/api/upload-photo', {
           method: 'POST',
           headers: {
@@ -92,13 +87,15 @@ export default function ProfileSetup() {
             photoUrl: profileImage
           }),
         });
-        // Navigate to results page
-        window.location.href = '/signup'
-      } catch (error) {
-        console.error('Error submitting profile:', error);
-        alert('Failed to submit profile. Please try again.');
       }
+      
+      // Navigate to signup page
+      window.location.href = '/signup'
+    } catch (error) {
+      console.error('Error submitting profile:', error);
+      alert('Failed to submit profile. Please try again.');
     }
+    setIsLoading(false);
   }
 
   return (
@@ -158,10 +155,17 @@ export default function ProfileSetup() {
             aria-label="Upload profile picture"
           />
 
-          {/* Uploaded Preview */}
-          {profileImage && (
+          {/* Uploaded Preview - Only show for camera uploads */}
+          {selectedOption === "camera" && profileImage && (
             <div className="mt-6 w-32 h-32 relative rounded-full overflow-hidden border-4 border-pink-500">
-              <Image src={profileImage} alt="Profile Preview" layout="fill" objectFit="cover" />
+              <Image 
+                src={profileImage} 
+                alt="Profile Preview" 
+                fill
+                sizes="(max-width: 128px) 100vw, 128px"
+                style={{ objectFit: 'cover' }}
+                priority
+              />
             </div>
           )}
 
@@ -169,9 +173,9 @@ export default function ProfileSetup() {
           <div className="relative flex flex-col items-center mt-10">
             <Button
               onClick={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || !selectedOption}
               className={`w-40 py-6 px-6 rounded-full text-xl font-medium bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500
-                ${isLoading ? "opacity-50 cursor-not-allowed" : "text-white"}`}
+                ${isLoading || !selectedOption ? "opacity-50 cursor-not-allowed" : "text-white"}`}
             >
               {isLoading ? "Processing..." : "Submit"}
             </Button>
@@ -184,6 +188,7 @@ export default function ProfileSetup() {
                 width={180}
                 height={120}
                 className="object-contain -mt-4 -ml-8"
+                priority
               />
             </div>
           </div>
