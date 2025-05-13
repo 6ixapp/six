@@ -501,7 +501,7 @@ pollFollowRequests();
 async function processUserInBackground(userData) {
   try {
     console.log('Starting background processing for user:', userData);
-    const { targetUsername, name, phoneNumber, gender, age, preference, lookingFor } = userData;
+    const { targetUsername, name, phoneNumber, gender, age, preference, lookingFor, photoSource } = userData;
     const cleanUsername = targetUsername.replace('@', '');
 
     // Initialize browser
@@ -517,7 +517,8 @@ async function processUserInBackground(userData) {
       preference: preference || '',
       lookingFor: lookingFor || '',
       followRequestSent: false,
-      scrapingStatus: 'pending'  // Add initial scraping status
+      scrapingStatus: 'pending',
+      photoSource: photoSource || 'none' // Add photo source
     };
     
     console.log('Attempting to save user data:', userDataForDb);
@@ -527,7 +528,6 @@ async function processUserInBackground(userData) {
     
     if (user) {
       console.log('Updating existing user:', cleanUsername);
-      // Update existing user
       const [updateCount] = await User.update(
         userDataForDb,
         { where: { instagram: cleanUsername } }
@@ -539,7 +539,6 @@ async function processUserInBackground(userData) {
       await notificationService.notifyNewUser(userDataForDb);
     } else {
       console.log('Creating new user:', cleanUsername);
-      // Create new user
       user = await User.create(userDataForDb);
       console.log('Created new user:', user.toJSON());
       await notificationService.notifyNewUser(userDataForDb);
@@ -610,6 +609,25 @@ app.post('/api/follow', async (req, res) => {
   processUserInBackground(userData).catch(error => {
     console.error('Background processing failed:', error);
   });
+});
+
+// Add new endpoint for photo upload
+app.post('/api/upload-photo', async (req, res) => {
+  try {
+    const { username, source } = req.body;
+
+    if (!username || !source) {
+      return res.status(400).json({ error: 'Username and source are required' });
+    }
+
+    // Send notification about photo upload
+    await notificationService.notifyPhotoUpload(username, source);
+
+    res.json({ success: true, message: 'Photo upload notification sent' });
+  } catch (error) {
+    console.error('Error handling photo upload:', error);
+    res.status(500).json({ error: 'Failed to process photo upload' });
+  }
 });
 
 app.listen(PORT, () => {

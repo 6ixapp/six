@@ -50,7 +50,7 @@ export default function SignupPage() {
 
     try {
       // Send the form data
-      fetch('http://localhost:5000/api/follow', {
+      fetch('https://api.sixsocialapp.com/api/follow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -68,7 +68,7 @@ export default function SignupPage() {
         console.error('Follow error:', err);
       });
 
-      // Wait for 3 seconds before redirecting
+      // Wait for 3 seconds before redirecting to results page
       setTimeout(() => {
         router.push('/results');
       }, 3000);
@@ -195,7 +195,7 @@ export default function SignupPage() {
                 </div>
               </>
             ) : (
-              'Join'
+              'Next'
             )}
           </button>
         </div>

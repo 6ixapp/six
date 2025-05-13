@@ -63,7 +63,7 @@ export default function SelectionPage() {
         ))}
       </div>
 
-      <Link href="/signup">
+      <Link href="/profile">
         <Button
           size="lg"
           className="rounded-full bg-gradient-to-r from-blue-500 to-pink-500 hover:from-blue-600 hover:to-pink-600 text-white px-8 py-6 text-lg h-auto mt-4"
