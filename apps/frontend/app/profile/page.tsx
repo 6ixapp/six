@@ -163,7 +163,12 @@ export default function ProfileSetup() {
                 alt="Profile Preview" 
                 fill
                 sizes="(max-width: 128px) 100vw, 128px"
-                style={{ objectFit: 'cover' }}
+                style={{ 
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                  transform: 'rotate(0deg)',
+                  transition: 'transform 0.3s ease'
+                }}
                 priority
               />
             </div>
@@ -177,7 +182,7 @@ export default function ProfileSetup() {
               className={`w-40 py-6 px-6 rounded-full text-xl font-medium bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500
                 ${isLoading || !selectedOption ? "opacity-50 cursor-not-allowed" : "text-white"}`}
             >
-              {isLoading ? "Processing..." : "Submit"}
+              {isLoading ? "Processing..." : "Next"}
             </Button>
             {/* Arrow + Handwritten Note */}
             <div className="absolute -right-32 top-0 flex flex-col items-start">

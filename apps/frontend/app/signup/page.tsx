@@ -195,7 +195,7 @@ export default function SignupPage() {
                 </div>
               </>
             ) : (
-              'Next'
+              'Join'
             )}
           </button>
         </div>
