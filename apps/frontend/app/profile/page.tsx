@@ -1,3 +1,5 @@
+
+/*
 "use client"
 
 import type React from "react"
@@ -101,7 +103,7 @@ export default function ProfileSetup() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-white">
       <div className="w-full max-w-md space-y-8 flex flex-col items-center">
-        {/* Logo */}
+         Logo 
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
@@ -121,7 +123,7 @@ export default function ProfileSetup() {
         </div>
 
         <div className="space-y-4 w-full flex flex-col items-center">
-          {/* Instagram Button */}
+          
           <button
             onClick={handleInstagramClick}
             disabled={isLoading}
@@ -133,7 +135,7 @@ export default function ProfileSetup() {
             {isLoading ? "Processing..." : "Use Instagram profile pic"}
           </button>
 
-          {/* Camera Roll Button */}
+         
           <button
             onClick={handleCameraRollClick}
             disabled={isLoading}
@@ -145,7 +147,7 @@ export default function ProfileSetup() {
             {isLoading && selectedOption === "camera" ? "Processing..." : "Upload from camera roll"}
           </button>
 
-          {/* Hidden File Input */}
+       
           <input
             type="file"
             ref={fileInputRef}
@@ -155,7 +157,7 @@ export default function ProfileSetup() {
             aria-label="Upload profile picture"
           />
 
-          {/* Uploaded Preview - Only show for camera uploads */}
+         
           {selectedOption === "camera" && profileImage && (
             <div className="mt-6 w-32 h-32 relative rounded-full overflow-hidden border-4 border-pink-500">
               <Image 
@@ -174,7 +176,8 @@ export default function ProfileSetup() {
             </div>
           )}
 
-          {/* Submit Button - Always visible */}
+          {/* Submit Button - Always visible */
+          /*
           <div className="relative flex flex-col items-center mt-10">
             <Button
               onClick={handleSubmit}
@@ -184,7 +187,8 @@ export default function ProfileSetup() {
             >
               {isLoading ? "Processing..." : "Next"}
             </Button>
-            {/* Arrow + Handwritten Note */}
+            {/* Arrow + Handwritten Note */
+            /*
             <div className="absolute -right-32 top-0 flex flex-col items-start">
               <Arrow31 className="w-16 h-24 text-purple-500 -rotate-130 scale-x-[-1] mb-2 ml-4" aria-hidden="true" />
               <Image
@@ -202,3 +206,4 @@ export default function ProfileSetup() {
     </div>
   )
 }
+*/
