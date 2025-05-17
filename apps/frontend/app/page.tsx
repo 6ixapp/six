@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -13,7 +13,7 @@ export default function Index() {
   const [typingSpeed, setTypingSpeed] = useState(150);
   const scrollSectionRef = useRef<HTMLDivElement>(null);
 
-  const phrases = [" call with Six", " introduction"];
+  const phrases = ["rooms", "parties", "courses"];
 
   useEffect(() => {
     const handleTyping = () => {
@@ -55,25 +55,24 @@ export default function Index() {
             Six
           </h1>
           <div className="max-w-xl mx-auto">
-            <p className="text-xl mb-1">Your AI matchmaker.</p>
-            <p className="text-xl mb-4">A friend or a date — you pick</p>
-            <div className="h-16 flex items-center justify-center">
-              <p className="text-xl font-medium">
-                <span>One </span>
-                <span
-                  className={`bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-pink-500 ${
-                    isDeleting ? "invisible" : ""
-                  }`}
-                >
-                  {text}
-                  <span className="animate-pulse text-blue-500">|</span>
-                </span>
-              </p>
-            </div>
+            <p className="text-xl mb-1">
+              you've already been in the <br /> same{" "}
+              <span
+                className={`bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-pink-500 ${
+                  isDeleting ? "invisible" : ""
+                }`}
+              >
+                {text}
+                <span className="animate-pulse text-blue-500">|</span>
+              </span>
+            </p>
+            <p className="text-xl mb-4">
+              we make sure you don't miss<br /> each other again
+            </p>
           </div>
 
           <div className="relative mt-4">
-            <Link href="/prefrence">
+            <Link href="/signup">
               <Button className="rounded-full bg-gradient-to-r from-blue-500 to-pink-500 hover:from-blue-600 hover:to-pink-600 text-white px-8 py-6 text-lg h-auto">
                 Join The Waitlist
               </Button>
@@ -98,7 +97,7 @@ export default function Index() {
           <div className="w-full">
             <div className="relative w-full">
               <img
-                src="/text.jpg"
+                src="/6.jpg"
                 alt="Six AI matchmaker description"
                 className="w-full h-auto object-contain"
               />
@@ -106,17 +105,17 @@ export default function Index() {
           </div>
 
           {/* Terms and Conditions & Email */}
-          {/* Terms and Conditions & Email */}
-<div className="mt-20 text-center">
-  <Link
-    href="/about"
-    className="text-[10px] text-gray-600 hover:text-blue-500 transition-colors duration-200"
-  >
-    Terms and Conditions
-  </Link>
-  <p className="text-[10px] text-gray-400 mt-1">Email: contact@sixsocialapp.com</p>
-</div>
-
+          <div className="mt-20 text-center">
+            <Link
+              href="/about"
+              className="text-[10px] text-gray-600 hover:text-blue-500 transition-colors duration-200"
+            >
+              Terms and Conditions
+            </Link>
+            <p className="text-[10px] text-gray-400 mt-1">
+              Email: contact@sixsocialapp.com
+            </p>
+          </div>
         </div>
       </section>
 

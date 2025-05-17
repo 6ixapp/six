@@ -52,22 +52,7 @@ export default function Results() {
         </h1>
 
         {/* Extra Subheading */}
-        <p className="text-lg sm:text-xl md:text-2xl text-gray-600">
-          We’ll talk soon...
-        </p>
-
-        {/* Changing subheading */}
-        <h2 className="text-xl sm:text-2xl md:text-3xl font-medium text-gray-800">
-          {fixedWord}{" "}
-          <span
-            className={`inline-block transition-opacity duration-500 ${
-              fade ? "opacity-100" : "opacity-0"
-            } bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-pink-500`}
-          >
-            {changingWords[wordIndex]}
-            <span className="animate-pulse text-blue-500">|</span>
-          </span>
-        </h2>
+        
       </div>
     </main>
   )

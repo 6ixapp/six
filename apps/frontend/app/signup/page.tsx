@@ -174,10 +174,7 @@ export default function SignupPage() {
           />
         </div>
 
-        <p className="pt-1 text-xs text-zinc-600 text-center leading-relaxed px-4">
-          *Disclaimer: our matching algorithm reads between the lines and decodes your voice, tone, energy – the little
-          things even your therapist wouldn't get
-        </p>
+      
 
         <div className="pt-6">
           <button
