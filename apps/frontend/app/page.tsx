@@ -97,7 +97,7 @@ export default function Index() {
           <div className="w-full">
             <div className="relative w-full">
               <img
-                src="/6.jpg"
+                src="/ANAMIKA.jpg"
                 alt="Six AI matchmaker description"
                 className="w-full h-full object-contain"
               />

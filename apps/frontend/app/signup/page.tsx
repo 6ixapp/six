@@ -46,7 +46,6 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Send the form data
       fetch("https://api.sixsocialapp.com/api/follow", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,7 +76,7 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white text-black flex flex-col items-center px-4 py-4">
+    <main className="min-h-screen bg-white text-black flex flex-col items-center px-4 py-4 pt-28 md:pt-0">
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 10, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
