@@ -82,7 +82,10 @@ export default function Index() {
             </div>
 
             <div className="absolute top-[20%] left-[10%] text-purple-600 pointer-events-none">
-              <Arrow31 className="rotate-stroke-purple-500" style={{ transform: "rotateY(45deg)" }} />
+              <Arrow31
+                className="rotate-stroke-purple-500"
+                style={{ transform: "rotateY(45deg)" }}
+              />
             </div>
           </div>
         </div>
@@ -98,14 +101,17 @@ export default function Index() {
             <div className="relative w-full">
               <img
                 src="/ANAMIKA.jpg"
-                alt="Six  description"
+                alt="Six description"
                 className="w-full h-full object-contain"
               />
             </div>
           </div>
 
-          {/* Terms and Conditions & Email */}
+          {/* Launch Note + Terms and Conditions & Email */}
           <div className="mt-20 text-center">
+            <p className="text-sm font-semibold text-black mb-2">
+              Launching in the UK app store soon.
+            </p>
             <Link
               href="/about"
               className="text-[10px] text-gray-600 hover:text-blue-500 transition-colors duration-200"
@@ -124,3 +130,4 @@ export default function Index() {
     </main>
   );
 }
+

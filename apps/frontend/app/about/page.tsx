@@ -28,7 +28,7 @@ export default function About() {
 
           <h3 className="font-semibold mt-6">1. About Six</h3>
           <p>
-          Six is an AI-powered matchmaking platform designed to help people form real connections — whether for friendship or dating. Users engage in a brief voice conversation with Six’s AI, which asks thoughtful, dynamic questions to understand their personality and preferences. Based on the insights gathered from this call, we introduce them to a potential match via messages. We provide light-touch support to help users connect meaningfully with their match — all while keeping the experience private, secure, and effortless.
+          Six is an AI-powered matchmaking platform designed to help people form real connections — whether for friendship or dating. Users engage in a brief voice conversation with Six's AI, which asks thoughtful, dynamic questions to understand their personality and preferences. Based on the insights gathered from this call, we introduce them to a potential match via messages. We provide light-touch support to help users connect meaningfully with their match — all while keeping the experience private, secure, and effortless.
           </p>
 
           <h3 className="font-semibold mt-6">2. Eligibility</h3>
@@ -64,7 +64,7 @@ export default function About() {
             <li>Use your social data to target ads</li>
           </ul>
           <p>
-            All data analysis is conducted in-house or with vetted tools that comply with GDPR, CCPA, and Apple’s privacy requirements.
+            All data analysis is conducted in-house or with vetted tools that comply with GDPR, CCPA, and Apple's privacy requirements.
           </p>
 
           <strong>d. Third-Party Services</strong>
@@ -87,7 +87,7 @@ export default function About() {
 
           <h3 className="font-semibold mt-6">6. No Warranties</h3>
           <p>
-            The Site is provided “as is” and “as available.” We make no guarantees that the service will be uninterrupted, secure, or error-free. While we aim to offer magical matches, we can’t promise every experience will be perfect.
+            The Site is provided "as is" and "as available." We make no guarantees that the service will be uninterrupted, secure, or error-free. While we aim to offer magical matches, we can't promise every experience will be perfect.
           </p>
 
           <h3 className="font-semibold mt-6">7. Limitation of Liability</h3>
@@ -97,7 +97,7 @@ export default function About() {
 
           <h3 className="font-semibold mt-6">8. Changes to the Terms</h3>
           <p>
-            We may occasionally update these Terms. If we do, we’ll post them on this page and update the effective date. Continued use of the Site after changes implies your acceptance of the updated Terms.
+            We may occasionally update these Terms. If we do, we'll post them on this page and update the effective date. Continued use of the Site after changes implies your acceptance of the updated Terms.
           </p>
 
           <h3 className="font-semibold mt-6">9. Apple Business Messages Compliance</h3>
