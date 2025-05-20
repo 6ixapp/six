@@ -13,7 +13,7 @@ export default function Index() {
   const [typingSpeed, setTypingSpeed] = useState(150);
   const scrollSectionRef = useRef<HTMLDivElement>(null);
 
-  const phrases = ["rooms", "parties", "courses"];
+  const phrases = ["rooms", "parties", "stories"];
 
   useEffect(() => {
     const handleTyping = () => {
@@ -74,7 +74,7 @@ export default function Index() {
           <div className="relative mt-4">
             <Link href="/signup">
               <Button className="rounded-full bg-gradient-to-r from-blue-500 to-pink-500 hover:from-blue-600 hover:to-pink-600 text-white px-8 py-6 text-lg h-auto">
-                Join The Waitlist
+                Get Your Invite
               </Button>
             </Link>
             <div className="absolute left-[32%] top-[200%] w-2/4 text-sm">
@@ -99,7 +99,7 @@ export default function Index() {
               <img
                 src="/6.jpg"
                 alt="Six AI matchmaker description"
-                className="w-full h-auto object-contain"
+                className="w-full h-full object-contain"
               />
             </div>
           </div>

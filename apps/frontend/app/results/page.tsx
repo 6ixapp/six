@@ -51,8 +51,12 @@ export default function Results() {
           </span>
         </h1>
 
-        {/* Extra Subheading */}
-        
+        {/* Additional Info */}
+        <div className="text-base sm:text-lg md:text-xl text-gray-700 leading-snug mt-2">
+          <p>Private room @ The Chapel Bar, Angel.</p>
+          <p>930pm — 2am.</p>
+          <p>Doors close at 11pm.</p>
+        </div>
       </div>
     </main>
   )
