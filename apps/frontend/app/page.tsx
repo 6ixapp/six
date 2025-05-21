@@ -118,6 +118,12 @@ export default function Index() {
             >
               Terms and Conditions
             </Link>
+            <Link
+              href="/contact"
+              className="text-[10px] text-gray-600 hover:text-blue-500 transition-colors duration-200 ml-4"
+            >
+              Contact Form
+            </Link>
             <p className="text-[10px] text-gray-400 mt-1">
               Email: contact@sixsocialapp.com
             </p>
