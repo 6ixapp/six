@@ -74,7 +74,7 @@ export default function Index() {
           <div className="relative mt-4">
             <Link href="/signup">
               <Button className="rounded-full bg-gradient-to-r from-blue-500 to-pink-500 hover:from-blue-600 hover:to-pink-600 text-white px-8 py-6 text-lg h-auto">
-                Get Your Invite
+                Join the Waitlist 
               </Button>
             </Link>
             <div className="absolute left-[32%] top-[200%] w-2/4 text-sm">
