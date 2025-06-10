@@ -90,8 +90,7 @@ export default function SignupPage() {
         />
       </motion.div>
 
-       <p class="text-center text-xl mb-4 opacity-80 -mt-2">Add commentMore actions
-  the only form we’ll ever ask you to fill
+       <p class="text-center text-xl mb-4 opacity-80 -mt-2">the only form we’ll ever ask you to fill
 </p>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4">
