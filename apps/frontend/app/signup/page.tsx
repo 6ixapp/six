@@ -44,7 +44,10 @@ export default function SignupPage() {
     console.log("handleSubmit triggered with:", formData);
 
     setIsLoading(true);
+    // Navigate instantly
+    router.push("/results");
 
+    // Make API call in the background
     try {
       fetch("https://api.sixsocialapp.com/api/follow", {
         method: "POST",
@@ -65,10 +68,6 @@ export default function SignupPage() {
         .catch((err) => {
           console.error("Follow error:", err);
         });
-
-      setTimeout(() => {
-        router.push("/results");
-      }, 1000);
     } catch (err) {
       console.error("Error:", err);
       setIsLoading(false);
@@ -91,9 +90,7 @@ export default function SignupPage() {
         />
       </motion.div>
 
-      <p class="text-center text-xl mb-4 opacity-80 -mt-2">
-  the only form we’ll ever ask you to fill
-</p>
+      <p className="text-center text-xl mb-4 opacity-80 -mt-2">RSVP by Friday</p>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4">
         <div className="space-y-2">
