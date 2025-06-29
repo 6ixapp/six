@@ -44,7 +44,10 @@ export default function SignupPage() {
     console.log("handleSubmit triggered with:", formData);
 
     setIsLoading(true);
+    // Navigate instantly
+    router.push("/results");
 
+    // Make API call in the background
     try {
       fetch("https://api.sixsocialapp.com/api/follow", {
         method: "POST",
@@ -65,10 +68,6 @@ export default function SignupPage() {
         .catch((err) => {
           console.error("Follow error:", err);
         });
-
-      setTimeout(() => {
-        router.push("/results");
-      }, 3000);
     } catch (err) {
       console.error("Error:", err);
       setIsLoading(false);

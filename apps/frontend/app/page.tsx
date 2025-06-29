@@ -100,7 +100,7 @@ export default function Index() {
           <div className="w-full">
             <div className="relative w-full">
               <img
-                src="/ANAMIKA.jpg"
+                src="/Anamika2.jpg"
                 alt="Six description"
                 className="w-full h-full object-contain"
               />
