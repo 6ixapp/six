@@ -92,19 +92,14 @@ export default function Index() {
       </section>
 
       {/* Info Section */}
+       
       <section
         ref={scrollSectionRef}
         className="mt-80 w-full max-w-3xl mx-auto px-6 py-16 pt-0 flex flex-col justify-center relative"
       >
         <div className="space-y-8 text-left max-w-2xl mx-auto">
           <div className="w-full">
-            <div className="relative w-full">
-              <img
-                src="/Anamika2.jpg"
-                alt="Six description"
-                className="w-full h-full object-contain"
-              />
-            </div>
+            
           </div>
 
           {/* Launch Note + Terms and Conditions & Email */}
